@@ -6,7 +6,7 @@
     <title>Quirkt — Quantum Playground</title>
     <meta
       name="description"
-      content="Three quantum games for everyone — run live on Railway, play in your browser."
+      content="Live Qiskit demos: quantum oracle, portfolio sampler, and Grover swap search for Hyperlinks Space Program."
     />
     <link rel="stylesheet" href="./assets/css/playground.css" />
     <script>
@@ -24,15 +24,15 @@
       <h1 id="hero-title">Quirkt Quantum Playground</h1>
       <p id="hero-lead"></p>
       <div class="badges">
-        <span id="badge-live" class="badge">Live quantum computer</span>
-        <span id="badge-ready" class="badge ok">Ready to play</span>
+        <span id="badge-live" class="badge">Live Qiskit (Railway)</span>
+        <span id="badge-ready" class="badge ok">Ready</span>
         <span id="api-status-badge" class="badge warn">Connecting…</span>
       </div>
     </header>
 
     <main class="layout">
       <aside class="sidebar">
-        <h2 id="sidebar-demos-label">Pick a game</h2>
+        <h2 id="sidebar-demos-label">Circuits</h2>
         <nav id="demo-list"></nav>
       </aside>
 
@@ -47,20 +47,20 @@
           <div id="results-section" class="results-section">
             <div class="grid-2 results-grid">
               <div class="results-block">
-                <h3 id="hist-title">Results chart</h3>
+                <h3 id="hist-title">Measurement histogram</h3>
                 <p id="hist-hint" class="panel-hint"></p>
                 <canvas id="hist-canvas"></canvas>
                 <div id="metrics" class="metrics"></div>
               </div>
               <div class="results-block">
-                <h3 id="bloch-title">Tiny quantum arrow</h3>
+                <h3 id="bloch-title">Bloch sphere (qubit 0)</h3>
                 <p id="bloch-hint" class="panel-hint"></p>
                 <canvas id="bloch-canvas"></canvas>
               </div>
             </div>
 
             <div id="portfolio-panel" class="results-block portfolio-block" hidden>
-              <h3 id="portfolio-title">How to split your coins</h3>
+              <h3 id="portfolio-title">Portfolio weights</h3>
               <p id="portfolio-hint" class="panel-hint"></p>
               <canvas id="portfolio-canvas"></canvas>
             </div>
@@ -71,17 +71,17 @@
         </article>
 
         <article class="panel">
-          <h2 id="integration-title">Where this helps in real apps</h2>
+          <h2 id="integration-title">Hyperlinks Space Program integration</h2>
           <div id="integration-panel"></div>
         </article>
 
         <article class="panel">
-          <h2 id="roadmap-title">What comes next</h2>
+          <h2 id="roadmap-title">Roadmap</h2>
           <ul id="roadmap-list" class="integration-hooks"></ul>
         </article>
       </section>
     </main>
 
-    <script type="module" src="./assets/js/playground.js?v=4"></script>
+    <script type="module" src="./assets/js/playground.js?v=5"></script>
   </body>
 </html>
