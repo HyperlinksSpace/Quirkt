@@ -26,6 +26,13 @@ def _allowed_origins() -> list[str]:
     ]
 
 
+def _github_pages_regex() -> str | None:
+    flag = os.getenv("QUIRKT_ALLOW_GITHUB_PAGES", "true").lower()
+    if flag in ("0", "false", "no"):
+        return None
+    return r"https://([\w-]+\.)?github\.io"
+
+
 app = FastAPI(
     title="Quirkt API",
     description="Live Qiskit Aer backend for the Quirkt GitHub Pages playground.",
@@ -35,6 +42,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_allowed_origins(),
+    allow_origin_regex=_github_pages_regex(),
     allow_credentials=False,
     allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
@@ -57,6 +65,7 @@ def health() -> dict:
         "service": "quirkt-api",
         "engine": "qiskit-aer",
         "allowed_origins": _allowed_origins(),
+        "github_pages_regex": _github_pages_regex(),
     }
 
 

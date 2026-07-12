@@ -7,6 +7,8 @@ import {
 } from "./visualizer.js";
 
 const STORAGE_KEY = "quirkt_api_url";
+const CUSTOM_API_FLAG = "quirkt_api_custom";
+const DEFAULT_API_URL = "https://quirkt-production.up.railway.app";
 
 const INTEGRATION_COPY = {
   oracle: {
@@ -41,7 +43,11 @@ let apiUrl = "";
 
 function normalizeApiUrl(raw) {
   if (!raw) return "";
-  return raw.trim().replace(/\/+$/, "");
+  let url = raw.trim().replace(/\/+$/, "");
+  if (url && !/^https?:\/\//i.test(url)) {
+    url = `https://${url}`;
+  }
+  return url;
 }
 
 function getApiUrlFromQuery() {
@@ -54,24 +60,24 @@ async function loadApiConfig() {
   if (fromQuery) {
     apiUrl = fromQuery;
     localStorage.setItem(STORAGE_KEY, apiUrl);
+    localStorage.removeItem(CUSTOM_API_FLAG);
     return;
   }
 
-  const stored = normalizeApiUrl(localStorage.getItem(STORAGE_KEY) || "");
-  if (stored) {
-    apiUrl = stored;
-    return;
-  }
-
+  let configured = DEFAULT_API_URL;
   try {
     const res = await fetch("./assets/config.json");
     if (res.ok) {
       const cfg = await res.json();
-      apiUrl = normalizeApiUrl(cfg.apiUrl || "");
+      configured = normalizeApiUrl(cfg.apiUrl || "") || DEFAULT_API_URL;
     }
   } catch {
-    apiUrl = "";
+    configured = DEFAULT_API_URL;
   }
+
+  const stored = normalizeApiUrl(localStorage.getItem(STORAGE_KEY) || "");
+  const userCustom = localStorage.getItem(CUSTOM_API_FLAG) === "true";
+  apiUrl = userCustom && stored ? stored : configured;
 }
 
 function syncApiInput() {
@@ -97,17 +103,22 @@ async function checkApiHealth() {
     await res.json();
     setApiStatus("Railway API connected", "ok");
     return true;
-  } catch {
-    setApiStatus("Railway API unreachable (CORS or URL?)", "warn");
+  } catch (err) {
+    const msg = String(err?.message || err);
+    if (msg === "Failed to fetch") {
+      setApiStatus("Blocked by CORS — set QUIRKT_ALLOWED_ORIGINS on Railway", "warn");
+    } else {
+      setApiStatus(`API error: ${msg}`, "warn");
+    }
     return false;
   }
 }
 
 function saveApiUrl() {
   const input = document.getElementById("api-url-input");
-  apiUrl = normalizeApiUrl(input?.value || "");
-  if (apiUrl) localStorage.setItem(STORAGE_KEY, apiUrl);
-  else localStorage.removeItem(STORAGE_KEY);
+  apiUrl = normalizeApiUrl(input?.value || "") || DEFAULT_API_URL;
+  localStorage.setItem(STORAGE_KEY, apiUrl);
+  localStorage.setItem(CUSTOM_API_FLAG, "true");
   checkApiHealth();
 }
 

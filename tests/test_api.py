@@ -21,6 +21,15 @@ def test_run_oracle():
     assert sum(body["counts"].values()) == 256
 
 
+def test_cors_allows_github_pages_origin():
+    res = client.get(
+        "/health",
+        headers={"Origin": "https://someuser.github.io"},
+    )
+    assert res.status_code == 200
+    assert res.headers.get("access-control-allow-origin") == "https://someuser.github.io"
+
+
 def test_run_grover_post():
     res = client.post(
         "/api/run",
