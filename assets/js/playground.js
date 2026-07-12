@@ -41,6 +41,18 @@ let payload = null;
 let activeDemo = null;
 let apiUrl = "";
 
+const DEFAULT_API_URL =
+  globalThis.QUIRKT_DEFAULT_API || "https://quirkt-production.up.railway.app";
+
+function isAbsoluteHttpUrl(raw) {
+  try {
+    const u = new URL(raw);
+    return u.protocol === "https:" || u.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 function normalizeApiUrl(raw) {
   if (!raw) return "";
   let url = raw.trim().replace(/\/+$/, "");
@@ -48,6 +60,19 @@ function normalizeApiUrl(raw) {
     url = `https://${url}`;
   }
   return url;
+}
+
+/** Always return a full https origin — never a relative path. */
+function resolveApiUrl(raw) {
+  const normalized = normalizeApiUrl(raw || "");
+  if (isAbsoluteHttpUrl(normalized)) {
+    return normalized;
+  }
+  return DEFAULT_API_URL;
+}
+
+function getApiBase() {
+  return resolveApiUrl(apiUrl);
 }
 
 function getApiUrlFromQuery() {
@@ -77,12 +102,19 @@ async function loadApiConfig() {
 
   const stored = normalizeApiUrl(localStorage.getItem(STORAGE_KEY) || "");
   const userCustom = localStorage.getItem(CUSTOM_API_FLAG) === "true";
-  apiUrl = userCustom && stored ? stored : configured;
+  apiUrl = resolveApiUrl(userCustom && stored ? stored : configured);
+
+  // Heal old saves missing https:// (caused relative fetch → 404 on GitHub Pages)
+  const rawStored = (localStorage.getItem(STORAGE_KEY) || "").trim();
+  if (rawStored && !/^https?:\/\//i.test(rawStored)) {
+    localStorage.setItem(STORAGE_KEY, apiUrl);
+    localStorage.removeItem(CUSTOM_API_FLAG);
+  }
 }
 
 function syncApiInput() {
   const input = document.getElementById("api-url-input");
-  if (input) input.value = apiUrl;
+  if (input) input.value = getApiBase();
 }
 
 function setApiStatus(text, kind = "") {
@@ -93,12 +125,9 @@ function setApiStatus(text, kind = "") {
 }
 
 async function checkApiHealth() {
-  if (!apiUrl) {
-    setApiStatus("Railway API not configured", "warn");
-    return false;
-  }
+  const base = getApiBase();
   try {
-    const res = await fetch(`${apiUrl}/health`);
+    const res = await fetch(`${base}/health`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     await res.json();
     setApiStatus("Railway API connected", "ok");
@@ -106,7 +135,7 @@ async function checkApiHealth() {
   } catch (err) {
     const msg = String(err?.message || err);
     if (msg === "Failed to fetch") {
-      setApiStatus("Blocked by CORS — set QUIRKT_ALLOWED_ORIGINS on Railway", "warn");
+      setApiStatus("Blocked by CORS — redeploy Railway with latest server/", "warn");
     } else {
       setApiStatus(`API error: ${msg}`, "warn");
     }
@@ -116,7 +145,7 @@ async function checkApiHealth() {
 
 function saveApiUrl() {
   const input = document.getElementById("api-url-input");
-  apiUrl = normalizeApiUrl(input?.value || "") || DEFAULT_API_URL;
+  apiUrl = resolveApiUrl(input?.value || DEFAULT_API_URL);
   localStorage.setItem(STORAGE_KEY, apiUrl);
   localStorage.setItem(CUSTOM_API_FLAG, "true");
   checkApiHealth();
@@ -255,11 +284,7 @@ function runSimulation(mode = "browser") {
 }
 
 async function runLiveQiskit() {
-  if (!apiUrl) {
-    setApiStatus("Set Railway API URL first", "warn");
-    return;
-  }
-
+  const base = getApiBase();
   const shots = Number(document.getElementById("shots-input").value) || activeDemo.shots;
   const validation = document.getElementById("validation-badge");
   validation.textContent = "Running on Railway…";
@@ -271,7 +296,7 @@ async function runLiveQiskit() {
   }
 
   try {
-    const res = await fetch(`${apiUrl}/api/run/${activeDemo.id}?${params}`, {
+    const res = await fetch(`${base}/api/run/${activeDemo.id}?${params}`, {
       method: "GET",
     });
     if (!res.ok) {
