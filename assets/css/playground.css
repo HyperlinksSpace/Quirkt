@@ -65,29 +65,30 @@ a {
 }
 
 .hero {
-  padding: 2rem clamp(1rem, 4vw, 3rem) 1rem;
+  padding: 1.25rem clamp(1rem, 4vw, 3rem) 0.75rem;
   padding-right: clamp(5rem, 12vw, 8rem);
   max-width: 1200px;
   margin: 0 auto;
 }
 
 .hero h1 {
-  margin: 0 0 0.5rem;
-  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  margin: 0 0 0.35rem;
+  font-size: clamp(1.5rem, 3.5vw, 2.2rem);
 }
 
 .hero p {
   color: var(--muted);
   max-width: 70ch;
-  line-height: 1.65;
-  font-size: 1.05rem;
+  line-height: 1.5;
+  font-size: 0.95rem;
+  margin: 0;
 }
 
 .badges {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-  margin-top: 1rem;
+  margin-top: 0.65rem;
 }
 
 .badge {
@@ -111,11 +112,75 @@ a {
 
 .layout {
   display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 1rem;
+  grid-template-columns: 200px 1fr;
+  gap: 0.75rem;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 clamp(1rem, 4vw, 3rem) 2rem;
+  padding: 0 clamp(1rem, 4vw, 3rem) 1.5rem;
+  align-items: start;
+}
+
+.main-column {
+  min-width: 0;
+}
+
+.play-panel {
+  margin-bottom: 0.75rem;
+  padding: 0.85rem 1rem;
+}
+
+.play-panel > h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0 0 0.65rem;
+}
+
+.results-section {
+  scroll-margin-top: 4rem;
+  margin-bottom: 0.75rem;
+}
+
+.results-grid {
+  gap: 0.65rem;
+  margin-bottom: 0;
+}
+
+.results-block {
+  background: #0f172a;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+}
+
+.results-block h3 {
+  margin: 0 0 0.25rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.portfolio-block {
+  margin-top: 0.65rem;
+}
+
+.demo-desc {
+  line-height: 1.5;
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin: 0.65rem 0 0.5rem;
+}
+
+.panel-hint {
+  font-size: 0.8rem;
+  color: var(--muted);
+  margin: 0 0 0.4rem;
+  line-height: 1.4;
 }
 
 @media (max-width: 860px) {
@@ -162,34 +227,12 @@ a {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1rem 1.25rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
 }
 
 .panel h2 {
   margin: 0 0 0.5rem;
-  font-size: 1.1rem;
-}
-
-.demo-desc {
-  line-height: 1.65;
-  font-size: 1.02rem;
-  color: var(--text);
-  margin: 0;
-}
-
-.panel-hint {
-  font-size: 0.9rem;
-  color: var(--muted);
-  margin: 0 0 0.75rem;
-  line-height: 1.5;
-}
-
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: center;
-  margin: 1rem 0;
+  font-size: 1.05rem;
 }
 
 button.primary {
@@ -224,21 +267,36 @@ canvas,
 }
 
 #circuit-svg {
-  min-height: 160px;
+  min-height: 88px;
+  max-height: 140px;
   display: block;
+  margin-top: 0.25rem;
 }
 
 #hist-canvas {
-  height: 220px;
+  height: 160px;
 }
 
 #bloch-canvas {
-  height: 180px;
-  max-width: 180px;
+  height: 140px;
+  max-width: 100%;
 }
 
 #portfolio-canvas {
-  height: 180px;
+  height: 140px;
+}
+
+.metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: var(--muted);
+  margin-top: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.metrics strong {
+  color: var(--text);
 }
 
 .integration-hooks {
@@ -252,18 +310,6 @@ canvas,
   line-height: 1.65;
   font-size: 1.02rem;
   margin: 0;
-}
-
-.metrics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
-  color: var(--muted);
-  margin-top: 0.75rem;
-}
-
-.metrics strong {
-  color: var(--text);
 }
 
 .error {

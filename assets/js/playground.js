@@ -181,6 +181,7 @@ async function runLiveQiskit() {
     renderResults(data.counts, data, highlight);
     setBadge("run-status-badge", t(lang, "runOk"), "ok");
     setBadge("api-status-badge", t(lang, "badgeConnected"), "ok");
+    $("results-section")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   } catch {
     setBadge("run-status-badge", t(lang, "runFail"), "warn");
   }
