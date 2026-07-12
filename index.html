@@ -3,10 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quirkt — Quantum Playground for Hyperlinks Space Program</title>
+    <title>Quirkt — Quantum Playground</title>
     <meta
       name="description"
-      content="Browser quantum playground: oracle, portfolio QAOA, and Grover swap search — built for HyperlinksSpaceProgram integration."
+      content="Three quantum games for everyone — run live on Railway, play in your browser."
     />
     <link rel="stylesheet" href="./assets/css/playground.css" />
     <script>
@@ -14,98 +14,71 @@
     </script>
   </head>
   <body>
+    <nav class="lang-switcher" aria-label="Language">
+      <button type="button" class="lang-btn active" data-lang="en">EN</button>
+      <button type="button" class="lang-btn" data-lang="ru">РУ</button>
+      <button type="button" class="lang-btn" data-lang="zh">中文</button>
+    </nav>
+
     <header class="hero">
-      <h1>Quirkt Quantum Playground</h1>
-      <p>
-        Three Qiskit reference circuits for
-        <a href="https://github.com/HyperlinksSpace/HyperlinksSpaceProgram" target="_blank" rel="noopener"
-          >Hyperlinks Space Program</a
-        >: random oracle, portfolio sampler, and swap-route Grover search. Python runs Qiskit locally;
-        this page replays the same gate sequences in a pure-JS simulator and compares histograms to the
-        committed reference (seed <span id="meta-seed">—</span>).
-      </p>
+      <h1 id="hero-title">Quirkt Quantum Playground</h1>
+      <p id="hero-lead"></p>
       <div class="badges">
-        <span class="badge">Qiskit (Railway)</span>
-        <span class="badge">GitHub Pages (root)</span>
-        <span class="badge">HSP-ready hooks</span>
-        <span id="api-status-badge" class="badge warn">Railway API not configured</span>
+        <span id="badge-live" class="badge">Live quantum computer</span>
+        <span id="badge-ready" class="badge ok">Ready to play</span>
+        <span id="api-status-badge" class="badge warn">Connecting…</span>
       </div>
     </header>
 
     <main class="layout">
       <aside class="sidebar">
-        <h2>Demos</h2>
+        <h2 id="sidebar-demos-label">Pick a game</h2>
         <nav id="demo-list"></nav>
-        <div class="api-config">
-          <h2>Railway API</h2>
-          <label class="api-label">
-            API URL
-            <input
-              id="api-url-input"
-              type="url"
-              value="https://quirkt-production.up.railway.app"
-              placeholder="https://quirkt-production.up.railway.app"
-            />
-          </label>
-          <button id="save-api-btn" type="button">Save</button>
-          <p class="api-hint">
-            Set <code>QUIRKT_ALLOWED_ORIGINS</code> on Railway to your Pages origin
-            (<code>https://&lt;user&gt;.github.io</code>). Or open with
-            <code>?api=https://…</code>
-          </p>
-        </div>
       </aside>
 
       <section>
         <article class="panel">
           <h2 id="demo-title">—</h2>
-          <p id="demo-desc"></p>
+          <p id="demo-desc" class="demo-desc"></p>
           <div class="controls">
-            <label>
-              Shots
-              <input id="shots-input" type="number" min="128" max="8192" step="128" value="2048" />
-            </label>
-            <button id="run-btn" class="primary" type="button">Run in browser</button>
-            <button id="run-railway-btn" class="secondary" type="button">Run live Qiskit (Railway)</button>
-            <span id="validation-badge" class="badge">—</span>
+            <button id="run-again-btn" class="primary" type="button">Run again</button>
+            <span id="run-status-badge" class="badge">—</span>
           </div>
           <svg id="circuit-svg" aria-label="Circuit diagram"></svg>
         </article>
 
         <div class="grid-2">
           <article class="panel">
-            <h2>Measurement histogram</h2>
+            <h2 id="hist-title">Results chart</h2>
+            <p id="hist-hint" class="panel-hint"></p>
             <canvas id="hist-canvas"></canvas>
             <div id="metrics" class="metrics"></div>
           </article>
           <article class="panel">
-            <h2>Qubit 0 — Bloch hint</h2>
+            <h2 id="bloch-title">Tiny quantum arrow</h2>
+            <p id="bloch-hint" class="panel-hint"></p>
             <canvas id="bloch-canvas"></canvas>
           </article>
         </div>
 
         <article class="panel" id="portfolio-panel" hidden>
-          <h2>Portfolio allocation bars</h2>
+          <h2 id="portfolio-title">How to split your coins</h2>
+          <p id="portfolio-hint" class="panel-hint"></p>
           <canvas id="portfolio-canvas"></canvas>
         </article>
 
         <article class="panel">
-          <h2>Hyperlinks Space Program integration</h2>
+          <h2 id="integration-title">Where this helps in real apps</h2>
           <div id="integration-panel"></div>
         </article>
 
         <article class="panel">
-          <h2>Development roadmap</h2>
-          <ul class="integration-hooks">
-            <li><strong>Phase 1</strong> — Embed this playground in the Expo web export via <code>WebView</code> screen.</li>
-            <li><strong>Phase 2</strong> — Railway FastAPI sidecar (<code>server/</code>) serves live Qiskit Aer shots to this playground.</li>
-            <li><strong>Phase 3</strong> — Sign oracle outputs on TON for auditable deal randomness.</li>
-            <li><strong>Phase 4</strong> — Feed portfolio vectors into OpenAI recommendation prompts in <code>ai/</code>.</li>
-          </ul>
+          <h2 id="roadmap-title">What comes next</h2>
+          <ul id="roadmap-list" class="integration-hooks"></ul>
         </article>
       </section>
     </main>
 
-    <script type="module" src="./assets/js/playground.js?v=2"></script>
+    <script type="module" src="./assets/js/playground.js?v=3"></script>
   </body>
 </html>

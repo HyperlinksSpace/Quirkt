@@ -1,169 +1,91 @@
-import { StatevectorSimulator, compareCounts } from "./simulator.js";
+import { StatevectorSimulator } from "./simulator.js";
 import {
   drawHistogram,
   drawCircuit,
   drawBloch,
   drawPortfolioBars,
 } from "./visualizer.js";
-
-const STORAGE_KEY = "quirkt_api_url";
-const CUSTOM_API_FLAG = "quirkt_api_custom";
-const DEFAULT_API_URL = "https://quirkt-production.up.railway.app";
-
-const INTEGRATION_COPY = {
-  oracle: {
-    summary: "Feed uniform random bits into TON commit-reveal deals and wallet nonce derivation.",
-    hooks: [
-      { module: "blockchain/", action: "Replace pseudo-RNG seeds in deal escrow with oracle output." },
-      { module: "api/", action: "Expose POST /api/quirkt/oracle returning signed bitstrings." },
-      { module: "telegram/", action: "Mini App button: 'Roll quantum nonce' before confirming a swap." },
-    ],
-  },
-  portfolio: {
-    summary: "Blend quantum-sampled weights into OpenAI portfolio prompts for diversified recommendations.",
-    hooks: [
-      { module: "ai/", action: "Append allocation vector to recommendation context JSON." },
-      { module: "api/", action: "Cron job runs QAOA sampler nightly; cache weights in Neon." },
-      { module: "blockchain/", action: "Map weights to rebalance hints for Swap.Coffee routes." },
-    ],
-  },
-  grover: {
-    summary: "Prototype quadratic-speed route search among bounded liquidity pools.",
-    hooks: [
-      { module: "blockchain/", action: "Pre-filter 8 candidate pools before on-chain quote calls." },
-      { module: "api/", action: "Grover microservice behind /api/quirkt/swap-search." },
-      { module: "ai/", action: "Explain chosen route to users via AI Transmitter chat." },
-    ],
-  },
-};
-
-let payload = null;
-let activeDemo = null;
-let apiUrl = "";
+import { STRINGS, t } from "./i18n.js";
 
 const DEFAULT_API_URL =
   globalThis.QUIRKT_DEFAULT_API || "https://quirkt-production.up.railway.app";
+const LANG_KEY = "quirkt_lang";
+const SHOTS = 2048;
 
-function isAbsoluteHttpUrl(raw) {
-  try {
-    const u = new URL(raw);
-    return u.protocol === "https:" || u.protocol === "http:";
-  } catch {
-    return false;
-  }
-}
-
-function normalizeApiUrl(raw) {
-  if (!raw) return "";
-  let url = raw.trim().replace(/\/+$/, "");
-  if (url && !/^https?:\/\//i.test(url)) {
-    url = `https://${url}`;
-  }
-  return url;
-}
-
-/** Always return a full https origin — never a relative path. */
-function resolveApiUrl(raw) {
-  const normalized = normalizeApiUrl(raw || "");
-  if (isAbsoluteHttpUrl(normalized)) {
-    return normalized;
-  }
-  return DEFAULT_API_URL;
-}
+let payload = null;
+let activeDemo = null;
+let lang = "en";
 
 function getApiBase() {
-  return resolveApiUrl(apiUrl);
+  return DEFAULT_API_URL.replace(/\/+$/, "");
 }
 
-function getApiUrlFromQuery() {
-  const param = new URLSearchParams(window.location.search).get("api");
-  return normalizeApiUrl(param || "");
+function loadLang() {
+  const saved = localStorage.getItem(LANG_KEY);
+  if (saved && STRINGS[saved]) lang = saved;
+  const q = new URLSearchParams(window.location.search).get("lang");
+  if (q && STRINGS[q]) lang = q;
 }
 
-async function loadApiConfig() {
-  const fromQuery = getApiUrlFromQuery();
-  if (fromQuery) {
-    apiUrl = fromQuery;
-    localStorage.setItem(STORAGE_KEY, apiUrl);
-    localStorage.removeItem(CUSTOM_API_FLAG);
-    return;
-  }
-
-  let configured = DEFAULT_API_URL;
-  try {
-    const res = await fetch("./assets/config.json");
-    if (res.ok) {
-      const cfg = await res.json();
-      configured = normalizeApiUrl(cfg.apiUrl || "") || DEFAULT_API_URL;
-    }
-  } catch {
-    configured = DEFAULT_API_URL;
-  }
-
-  const stored = normalizeApiUrl(localStorage.getItem(STORAGE_KEY) || "");
-  const userCustom = localStorage.getItem(CUSTOM_API_FLAG) === "true";
-  apiUrl = resolveApiUrl(userCustom && stored ? stored : configured);
-
-  // Heal old saves missing https:// (caused relative fetch → 404 on GitHub Pages)
-  const rawStored = (localStorage.getItem(STORAGE_KEY) || "").trim();
-  if (rawStored && !/^https?:\/\//i.test(rawStored)) {
-    localStorage.setItem(STORAGE_KEY, apiUrl);
-    localStorage.removeItem(CUSTOM_API_FLAG);
-  }
+function saveLang(code) {
+  lang = code;
+  localStorage.setItem(LANG_KEY, code);
+  document.documentElement.lang = code === "zh" ? "zh-Hans" : code;
 }
 
-function syncApiInput() {
-  const input = document.getElementById("api-url-input");
-  if (input) input.value = getApiBase();
+function $(id) {
+  return document.getElementById(id);
 }
 
-function setApiStatus(text, kind = "") {
-  const el = document.getElementById("api-status-badge");
+function setBadge(id, text, kind = "") {
+  const el = $(id);
   if (!el) return;
   el.textContent = text;
   el.className = "badge " + kind;
 }
 
-async function checkApiHealth() {
-  const base = getApiBase();
-  try {
-    const res = await fetch(`${base}/health`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    await res.json();
-    setApiStatus("Railway API connected", "ok");
-    return true;
-  } catch (err) {
-    const msg = String(err?.message || err);
-    if (msg === "Failed to fetch") {
-      setApiStatus("Blocked by CORS — redeploy Railway with latest server/", "warn");
-    } else {
-      setApiStatus(`API error: ${msg}`, "warn");
-    }
-    return false;
-  }
-}
+function applyStaticTranslations() {
+  document.title = t(lang, "pageTitle");
+  $("hero-title").textContent = t(lang, "heroTitle");
+  $("hero-lead").textContent = t(lang, "heroLead");
+  $("sidebar-demos-label").textContent = t(lang, "sidebarDemos");
+  $("hist-title").textContent = t(lang, "histTitle");
+  $("hist-hint").textContent = t(lang, "histHint");
+  $("bloch-title").textContent = t(lang, "blochTitle");
+  $("bloch-hint").textContent = t(lang, "blochHint");
+  $("portfolio-title").textContent = t(lang, "portfolioTitle");
+  $("portfolio-hint").textContent = t(lang, "portfolioHint");
+  $("integration-title").textContent = t(lang, "integrationTitle");
+  $("roadmap-title").textContent = t(lang, "roadmapTitle");
+  $("run-again-btn").textContent = t(lang, "runAgain");
+  setBadge("badge-live", t(lang, "badgeLive"), "");
+  setBadge("badge-ready", t(lang, "badgeReady"), "ok");
 
-function saveApiUrl() {
-  const input = document.getElementById("api-url-input");
-  apiUrl = resolveApiUrl(input?.value || DEFAULT_API_URL);
-  localStorage.setItem(STORAGE_KEY, apiUrl);
-  localStorage.setItem(CUSTOM_API_FLAG, "true");
-  checkApiHealth();
+  document.querySelectorAll(".lang-btn").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.lang === lang);
+  });
+
+  const list = $("roadmap-list");
+  list.innerHTML = t(lang, "roadmap")
+    .map((item) => `<li>${item}</li>`)
+    .join("");
 }
 
 async function loadPayload() {
   const res = await fetch("./assets/data/playground.json");
-  if (!res.ok) throw new Error("Could not load playground.json — run scripts/build_playground_data.py");
+  if (!res.ok) throw new Error("playground.json missing");
   payload = await res.json();
 }
 
 function renderDemoList() {
-  const list = document.getElementById("demo-list");
+  const list = $("demo-list");
   list.innerHTML = "";
   payload.demos.forEach((demo, index) => {
     const btn = document.createElement("button");
+    btn.type = "button";
     btn.className = "demo-tab" + (index === 0 ? " active" : "");
-    btn.textContent = demo.title;
+    btn.dataset.demoId = demo.id;
+    btn.textContent = t(lang, `demos.${demo.id}.title`);
     btn.addEventListener("click", () => selectDemo(demo.id));
     list.appendChild(btn);
   });
@@ -172,32 +94,13 @@ function renderDemoList() {
 function selectDemo(id) {
   activeDemo = payload.demos.find((d) => d.id === id);
   document.querySelectorAll(".demo-tab").forEach((el) => {
-    el.classList.toggle("active", el.textContent === activeDemo.title);
+    el.classList.toggle("active", el.dataset.demoId === id);
   });
-  document.getElementById("demo-title").textContent = activeDemo.title;
-  document.getElementById("demo-desc").textContent = activeDemo.description;
-  drawCircuit(document.getElementById("circuit-svg"), activeDemo);
-  renderIntegration(activeDemo.id);
-  runSimulation("browser");
-}
-
-function renderIntegration(demoId) {
-  const block = INTEGRATION_COPY[demoId];
-  const el = document.getElementById("integration-panel");
-  el.innerHTML = `
-    <p class="integration-summary">${block.summary}</p>
-    <ul class="integration-hooks">
-      ${block.hooks
-        .map((h) => `<li><code>${h.module}</code> — ${h.action}</li>`)
-        .join("")}
-    </ul>
-    <p class="integration-footer">
-      Live Qiskit runs on <strong>Railway</strong>; this page on <strong>GitHub Pages</strong> calls
-      <code>POST /api/run</code>. See
-      <a href="https://github.com/HyperlinksSpace/HyperlinksSpaceProgram" target="_blank" rel="noopener">HyperlinksSpaceProgram</a>
-      / Railway sidecar pattern (TDLib gateway).
-    </p>
-  `;
+  $("demo-title").textContent = t(lang, `demos.${id}.title`);
+  $("demo-desc").textContent = t(lang, `demos.${id}.desc`);
+  $("integration-panel").innerHTML = `<p class="integration-summary">${t(lang, `demos.${id}.integration`)}</p>`;
+  drawCircuit($("circuit-svg"), activeDemo);
+  runLiveQiskit();
 }
 
 function computeWeightsFromCounts(counts, labels) {
@@ -210,99 +113,64 @@ function computeWeightsFromCounts(counts, labels) {
   return labels.map((_, i) => buckets[["00", "01", "10", "11"][i]] / total);
 }
 
-function renderResults(counts, shots, mode, highlight = null, liveMeta = null) {
-  drawHistogram(document.getElementById("hist-canvas"), counts, highlight);
+function renderResults(counts, liveMeta = null, highlight = null) {
+  drawHistogram($("hist-canvas"), counts, highlight);
 
   const sim = new StatevectorSimulator(activeDemo.qubits);
   sim.runCircuit(
     activeDemo.gates.filter((g) => g.name !== "measure"),
-    Math.min(shots, 512)
+    512
   );
-  drawBloch(document.getElementById("bloch-canvas"), sim.blochVector(0));
+  drawBloch($("bloch-canvas"), sim.blochVector(0));
 
-  const metrics = document.getElementById("metrics");
-  const validation = document.getElementById("validation-badge");
-
-  if (mode === "browser") {
-    const ref = activeDemo.reference_counts;
-    const { delta, ok } = compareCounts(counts, ref);
-    validation.textContent = ok
-      ? "Browser sim ~ Qiskit reference"
-      : `Drift ${(delta * 100).toFixed(1)}% — re-run or increase shots`;
-    validation.className = "badge " + (ok ? "ok" : "warn");
-  } else {
-    validation.textContent = "Live Qiskit (Railway)";
-    validation.className = "badge ok";
-  }
-
+  const metrics = $("metrics");
   if (activeDemo.id === "portfolio") {
     const labels = liveMeta?.labels || activeDemo.labels;
-    const weights =
-      liveMeta?.weights || computeWeightsFromCounts(counts, activeDemo.labels);
-    drawPortfolioBars(document.getElementById("portfolio-canvas"), labels, weights);
-    document.getElementById("portfolio-panel").hidden = false;
-    metrics.innerHTML = `
-      <div>Expectation: <strong>${(liveMeta?.expectation ?? weights.reduce((s, w, i) => s + w * (i + 1), 0) / 4).toFixed(4)}</strong></div>
-      <div>Engine: <strong>${mode === "railway" ? "qiskit-aer" : "js-statevector"}</strong></div>
-    `;
+    const weights = liveMeta?.weights || computeWeightsFromCounts(counts, labels);
+    drawPortfolioBars($("portfolio-canvas"), labels, weights);
+    $("portfolio-panel").hidden = false;
+    metrics.innerHTML = `<div>${t(lang, "metricSplit")}: <strong>${labels.map((l, i) => `${l} ${(weights[i] * 100).toFixed(0)}%`).join(", ")}</strong></div>`;
   } else if (activeDemo.id === "grover") {
-    document.getElementById("portfolio-panel").hidden = true;
+    $("portfolio-panel").hidden = true;
     const marked = highlight;
-    const hitRate = (counts[marked] || 0) / shots;
+    const hitRate = (counts[marked] || 0) / SHOTS;
     const route = liveMeta?.marked_route || activeDemo.marked_route;
     metrics.innerHTML = `
-      <div>Marked route: <strong>${route}</strong></div>
-      <div>Success rate: <strong>${(hitRate * 100).toFixed(1)}%</strong></div>
-    `;
+      <div>${t(lang, "metricRoute")}: <strong>${route}</strong></div>
+      <div>${t(lang, "metricSuccess")}: <strong>${(hitRate * 100).toFixed(0)}%</strong></div>`;
   } else {
-    document.getElementById("portfolio-panel").hidden = true;
+    $("portfolio-panel").hidden = true;
     const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
     const bits = liveMeta?.bits || top?.[0] || "—";
-    metrics.innerHTML = `
-      <div>Top bitstring: <strong>${bits}</strong></div>
-      <div>Engine: <strong>${mode === "railway" ? "qiskit-aer" : "js-statevector"}</strong></div>
-    `;
+    metrics.innerHTML = `<div>${t(lang, "metricTopBits")}: <strong>${bits}</strong></div>`;
   }
 }
 
-function runSimulation(mode = "browser") {
-  const shots = Number(document.getElementById("shots-input").value) || activeDemo.shots;
-  const sim = new StatevectorSimulator(activeDemo.qubits);
-  const counts = sim.runCircuit(
-    activeDemo.gates.filter((g) => g.name !== "measure"),
-    shots
-  );
-
-  let highlight = null;
-  if (activeDemo.id === "grover") {
-    highlight = activeDemo.marked_index.toString(2).padStart(3, "0");
-  } else if (activeDemo.id === "oracle") {
-    highlight = activeDemo.reference_top;
+async function checkApiHealth() {
+  setBadge("api-status-badge", t(lang, "badgeConnecting"), "");
+  try {
+    const res = await fetch(`${getApiBase()}/health`);
+    if (!res.ok) throw new Error("bad status");
+    setBadge("api-status-badge", t(lang, "badgeConnected"), "ok");
+    return true;
+  } catch {
+    setBadge("api-status-badge", t(lang, "badgeOffline"), "warn");
+    return false;
   }
-
-  renderResults(counts, shots, mode, highlight);
 }
 
 async function runLiveQiskit() {
-  const base = getApiBase();
-  const shots = Number(document.getElementById("shots-input").value) || activeDemo.shots;
-  const validation = document.getElementById("validation-badge");
-  validation.textContent = "Running on Railway…";
-  validation.className = "badge";
+  if (!activeDemo) return;
+  setBadge("run-status-badge", t(lang, "running"), "");
 
-  const params = new URLSearchParams({ shots: String(shots) });
+  const params = new URLSearchParams({ shots: String(SHOTS) });
   if (activeDemo.id === "grover") {
     params.set("marked_index", String(activeDemo.marked_index));
   }
 
   try {
-    const res = await fetch(`${base}/api/run/${activeDemo.id}?${params}`, {
-      method: "GET",
-    });
-    if (!res.ok) {
-      const detail = await res.text();
-      throw new Error(detail || `HTTP ${res.status}`);
-    }
+    const res = await fetch(`${getApiBase()}/api/run/${activeDemo.id}?${params}`);
+    if (!res.ok) throw new Error(String(res.status));
     const data = await res.json();
     let highlight = null;
     if (activeDemo.id === "grover") {
@@ -310,25 +178,33 @@ async function runLiveQiskit() {
     } else if (activeDemo.id === "oracle") {
       highlight = data.bits;
     }
-    renderResults(data.counts, shots, "railway", highlight, data);
-    setApiStatus("Railway API connected", "ok");
-  } catch (err) {
-    validation.textContent = "Railway run failed";
-    validation.className = "badge warn";
-    setApiStatus(String(err.message || err), "warn");
+    renderResults(data.counts, data, highlight);
+    setBadge("run-status-badge", t(lang, "runOk"), "ok");
+    setBadge("api-status-badge", t(lang, "badgeConnected"), "ok");
+  } catch {
+    setBadge("run-status-badge", t(lang, "runFail"), "warn");
   }
 }
 
+function bindLangSwitcher() {
+  document.querySelectorAll(".lang-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      saveLang(btn.dataset.lang);
+      applyStaticTranslations();
+      renderDemoList();
+      if (activeDemo) selectDemo(activeDemo.id);
+    });
+  });
+}
+
 async function init() {
-  await loadApiConfig();
+  loadLang();
+  document.documentElement.lang = lang === "zh" ? "zh-Hans" : lang;
+  applyStaticTranslations();
+  bindLangSwitcher();
   await loadPayload();
-  syncApiInput();
-  document.getElementById("meta-seed").textContent = payload.seed;
-  document.getElementById("run-btn").addEventListener("click", () => runSimulation("browser"));
-  document.getElementById("run-railway-btn").addEventListener("click", runLiveQiskit);
-  document.getElementById("save-api-btn").addEventListener("click", saveApiUrl);
-  document.getElementById("shots-input").addEventListener("change", () => runSimulation("browser"));
   renderDemoList();
+  $("run-again-btn").addEventListener("click", runLiveQiskit);
   selectDemo(payload.demos[0].id);
   await checkApiHealth();
 }
