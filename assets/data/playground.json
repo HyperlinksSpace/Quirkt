@@ -1,0 +1,213 @@
+{
+  "version": "0.1.0",
+  "project": "Quirkt",
+  "hsp_program": "HyperlinksSpaceProgram",
+  "generated_by": "qiskit",
+  "seed": 42,
+  "demos": [
+    {
+      "id": "oracle",
+      "title": "Quantum Random Oracle",
+      "description": "Uniform random bits for deal nonces and commit-reveal seeds.",
+      "qubits": 4,
+      "classical_bits": 4,
+      "gates": [
+        {
+          "name": "h",
+          "qubits": [
+            0,
+            1,
+            2,
+            3
+          ]
+        },
+        {
+          "name": "measure",
+          "qubits": [
+            0,
+            1,
+            2,
+            3
+          ]
+        }
+      ],
+      "reference_counts": {
+        "0011": 51,
+        "1100": 51,
+        "0101": 63,
+        "1010": 67,
+        "0001": 65,
+        "1011": 66,
+        "0111": 66,
+        "1111": 71,
+        "1101": 68,
+        "1110": 53,
+        "0100": 81,
+        "0110": 76,
+        "0000": 45,
+        "0010": 64,
+        "1000": 69,
+        "1001": 68
+      },
+      "reference_top": "0100",
+      "shots": 1024,
+      "hsp_hooks": [
+        "blockchain",
+        "api",
+        "telegram"
+      ]
+    },
+    {
+      "id": "portfolio",
+      "title": "Portfolio QAOA Sampler",
+      "description": "Quantum allocation hints for AI-backed portfolio recommendations.",
+      "qubits": 2,
+      "classical_bits": 2,
+      "parameters": {
+        "gamma": 0.1,
+        "beta": 1.2,
+        "risk_penalty": 0.35
+      },
+      "labels": [
+        "TON",
+        "USDT",
+        "BTC",
+        "ETH"
+      ],
+      "gates": [
+        {
+          "name": "h",
+          "qubits": [
+            0,
+            1
+          ]
+        },
+        {
+          "name": "rzz",
+          "qubits": [
+            0,
+            1
+          ],
+          "theta": 0.06999999999999999
+        },
+        {
+          "name": "rz",
+          "qubits": [
+            0
+          ],
+          "theta": 0.13
+        },
+        {
+          "name": "rz",
+          "qubits": [
+            1
+          ],
+          "theta": 0.13
+        },
+        {
+          "name": "rx",
+          "qubits": [
+            0
+          ],
+          "theta": 2.4
+        },
+        {
+          "name": "rx",
+          "qubits": [
+            1
+          ],
+          "theta": 2.4
+        },
+        {
+          "name": "measure",
+          "qubits": [
+            0,
+            1
+          ]
+        }
+      ],
+      "reference_weights": [
+        0.27734375,
+        0.2724609375,
+        0.26953125,
+        0.1806640625
+      ],
+      "reference_counts": {
+        "11": 370,
+        "01": 558,
+        "10": 552,
+        "00": 568
+      },
+      "reference_expectation": 0.58837890625,
+      "shots": 2048,
+      "hsp_hooks": [
+        "ai",
+        "api",
+        "blockchain"
+      ]
+    },
+    {
+      "id": "grover",
+      "title": "Swap Route Grover Search",
+      "description": "Quadratic speedup demo for finding the best pool among eight routes.",
+      "qubits": 3,
+      "classical_bits": 3,
+      "routes": [
+        "TON->USDT",
+        "USDT->BTC",
+        "BTC->ETH",
+        "ETH->TON",
+        "TON->BTC",
+        "BTC->USDT",
+        "USDT->ETH",
+        "ETH->USDT"
+      ],
+      "marked_index": 5,
+      "marked_route": "BTC->USDT",
+      "gates": [
+        {
+          "name": "h",
+          "qubits": [
+            0,
+            1,
+            2
+          ]
+        },
+        {
+          "name": "grover_oracle",
+          "marked_index": 5
+        },
+        {
+          "name": "grover_diffuser",
+          "qubits": 3
+        },
+        {
+          "name": "measure",
+          "qubits": [
+            0,
+            1,
+            2
+          ]
+        }
+      ],
+      "reference_counts": {
+        "101": 1624,
+        "111": 55,
+        "010": 66,
+        "000": 54,
+        "100": 62,
+        "011": 71,
+        "001": 58,
+        "110": 58
+      },
+      "reference_success": 0.79296875,
+      "theoretical_success": 0.7812499999999999,
+      "shots": 2048,
+      "hsp_hooks": [
+        "blockchain",
+        "api",
+        "ai"
+      ]
+    }
+  ]
+}
